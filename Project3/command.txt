@@ -1,0 +1,3 @@
+cat en-universal-train.conll | awk '{print $2, $4"-"$5}' | perl -pe 's/\s-//g' > train-tagger.conll
+cat part-train.conll |./hunpos-train mytagger.model
+./hunpos-tag mytagger.model <en-universal-dev.conll > dev.out.3.conll

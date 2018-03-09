@@ -1,0 +1,17 @@
+cat en-universal-train.conll | awk '{print $2"\t"$4"-"$5}' | perl -pe 's/\s-//g' >train-tagger.conll
+
+cat train-tagger.conll | ./hunpos-train -t4 -s20 -f20 mytagger.model
+
+cat en-universal-test.words | awk '{print $2}' > test_word.conll
+./hunpos-tag mytagger.model <test_word.conll  > test-words-tag.conll
+
+cat test-words-tag.conll | awk '{sub(/-/,"\t",$2)};1' >test-words-tag_new.conll
+
+awk -v OFS='\t'  'FNR==NR {a1[NR]=$2;a2[NR]=$3;next}{$3=a1[FNR];$4=a2[FNR]}1' test-words-tag_new.conll en-universal-test.words | perl -pe 's/\t{4}//g' >en-universal-test-words.conll
+
+
+cat en-universal-test-words.conll | awk -F"\t" '{gsub("-","\t",$3)}{print $1"\t"$2"\t_\t"$3"\t"$4}' | perl -pe 's/\t{2}_\t{2}//g' >en-universal-test-words-no-.conll
+
+java -jar -Xmx5000m -Xms5000m maltparser-1.9.1.jar -c parser-all -m learn -i en-universal-train.words -a nivreeager -ne false -nr false
+
+java -jar -Xmx5000m -Xms5000m maltparser-1.9.1.jar -c parser-all -m parse -i en-universal-test-words-no-.conll -o dev.out.ex.6.conll
